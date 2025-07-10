@@ -1,0 +1,25 @@
+# Base image
+FROM python:3.11-slim
+
+# Set work directory
+WORKDIR /app
+
+# Copy script into container
+COPY your_script.py /app/main.py
+
+# Install dependencies
+RUN pip install --no-cache-dir psycopg2-binary
+
+# Set environment variables (can be overridden at runtime)
+ENV DB_HOST=localhost \
+    DB_PORT=5432 \
+    DB_NAME=your_database_name \
+    DB_USER=your_username \
+    DB_PASSWORD=your_password \
+    PATTERN='%pattern%' \
+    FLOW_START_STATE='100002000000999' \
+    FLOW_END_STATE='100006000000999'
+
+# Default command
+CMD ["python", "main.py"]
+
