@@ -8,7 +8,7 @@ import argparse
 
 ACCOUNT_IDENTIFIER = 'SxuV0ChbRqWGSYClFlMQMQ'
 
-API_TOKEN = "pat.SxuV0ChbRqWGSYClFlMQMQ.6915a15f5176ec4f502fe8f6.xXH1gkbbuSWnIkv6mhgQ"
+API_TOKEN = "Your API Token "
 
 BASE_URL_TEMPLATES = 'https://app.harness.io/gateway/chaos/manager/api/rest/experimenttemplates'
 
