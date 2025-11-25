@@ -6,7 +6,7 @@ import requests
 import json
 import argparse
 
-ACCOUNT_IDENTIFIER = 'SxuV0ChbRqWGSYClFlMQMQ'
+ACCOUNT_IDENTIFIER = 'Your Harness Acoount ID'
 
 API_TOKEN = "Your API Token "
 
