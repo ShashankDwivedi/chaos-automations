@@ -9,7 +9,6 @@ ACCOUNT_IDENTIFIER = 'Your Account ID'
 
 LINUX_BASE_URL = 'https://app.harness.io/gateway/chaos/manager/api/query?routingId=<YourAccountID>'
 
-#Requires sshpass to be installed on the local machine.
 def run_remote_command_with_password(host, user, password,root_password,remote_command):
 
     ssh_client = paramiko.SSHClient()
