@@ -19,22 +19,22 @@ def run_remote_command_with_password(host, user, password,root_password,remote_c
     shell = ssh_client.invoke_shell()
 
     # Wait for shell prompt
-    time.sleep(1)
+    time.sleep(5)
     shell.recv(1000)
 
     # Step 1: Switch to root
     shell.send("sudo su -\n")
-    time.sleep(1)
+    time.sleep(10)
 
     # Send sudo password
     shell.send(root_password + "\n")
-    time.sleep(1)
+    time.sleep(10)
 
     output = shell.recv(5000).decode()
 
     # Step 2: Execute command as root
     shell.send(remote_command + "\n")
-    time.sleep(1)
+    time.sleep(10)
 
     output += shell.recv(5000).decode()
 
