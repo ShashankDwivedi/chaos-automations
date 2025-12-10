@@ -49,7 +49,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
                 )
 
-            print(template_identity)
+            print('Going to Import Template:: ', template_identity)
 
             import_template_url = BASE_URL_TEMPLATES+'/'+template_identity+'/launch'
 
@@ -62,13 +62,11 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
 if __name__ == "__main__":
 
-    ACCOUNT_IDENTIFIER = 'Your Account ID'
+    ACCOUNT_IDENTIFIER = 'SxuV0ChbRqWGSYClFlMQMQ'
 
-    API_TOKEN = "Your API Token"
+    API_TOKEN = "pat.SxuV0ChbRqWGSYClFlMQMQ.6915a15f5176ec4f502fe8f6.xXH1gkbbuSWnIkv6mhgQ"
 
-    parser = argparse.ArgumentParser(
-        description="Sample script to read arguments from user"
-    )
+    parser = argparse.ArgumentParser(description="Sample script to read arguments from user")
 
     # Add arguments
     parser.add_argument("--orgId", required=True, help="Organization Identifier")
