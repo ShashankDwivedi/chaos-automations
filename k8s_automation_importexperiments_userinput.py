@@ -62,9 +62,9 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
 if __name__ == "__main__":
 
-    ACCOUNT_IDENTIFIER = 'SxuV0ChbRqWGSYClFlMQMQ'
+    ACCOUNT_IDENTIFIER = 'Your Account Identifier'
 
-    API_TOKEN = "pat.SxuV0ChbRqWGSYClFlMQMQ.6915a15f5176ec4f502fe8f6.xXH1gkbbuSWnIkv6mhgQ"
+    API_TOKEN = "Your API Token"
 
     parser = argparse.ArgumentParser(description="Sample script to read arguments from user")
 
