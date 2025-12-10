@@ -49,7 +49,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
                 )
 
-            print(template_identity)
+            print('Going to Import Template:: ', template_identity)
 
             import_template_url = BASE_URL_TEMPLATES+'/'+template_identity+'/launch'
 
@@ -62,7 +62,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
 if __name__ == "__main__":
 
-    ACCOUNT_IDENTIFIER = 'Your Account Identifier'
+    ACCOUNT_IDENTIFIER = 'Your Account ID'
 
     #Read Environment Variables
 
