@@ -2,22 +2,14 @@
 
 import requests
 import json
+import random
 import os
-
-ACCOUNT_IDENTIFIER = 'Your ACCOUNT Identifier'
-
-API_TOKEN = "Your API Token"
 
 BASE_URL_TEMPLATES = 'https://app.harness.io/gateway/chaos/manager/api/rest/experimenttemplates'
 
-
-common_headers = {
-    'Harness-Account': ACCOUNT_IDENTIFIER,
-    'x-api-key': API_TOKEN
-}
-
+#Argument: org_proj_infrakey | Example defaultorg:defaultproj:myenv/myinfra
 # The purpose of this function is to iterate over all the experiment templates present in Chaos Hub and create experiments in the respective projects.
-def create_experiment_from_template(org,proj,env_id,infra_id,chaos_hub):
+def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hub,api_token):
 
     try:
 
@@ -25,7 +17,7 @@ def create_experiment_from_template(org,proj,env_id,infra_id,chaos_hub):
 
         params = {
       
-        "accountIdentifier": ACCOUNT_IDENTIFIER,
+        "accountIdentifier": account_id,
         "organizationIdentifier": "",
         "projectIdentifier": "",
         "hubIdentity": chaos_hub,
@@ -34,23 +26,30 @@ def create_experiment_from_template(org,proj,env_id,infra_id,chaos_hub):
         }
         chaos_headers = {
         'Content-Type': 'application/json',
-        'X-API-KEY': API_TOKEN
+        'X-API-KEY': api_token
          }
-
-        Experiment_Templates_Import_Body = json.dumps(
-            {
-            "accountIdentifier": ACCOUNT_IDENTIFIER,
-            "infraRef": infra_ref,
-             "organizationIdentifier": org,
-             "projectIdentifier": proj
-            }
-        )
 
         templates_list = requests.request('GET',BASE_URL_TEMPLATES,params=params,headers=chaos_headers)
 
         for data in templates_list.json()['data']:
 
             template_identity = data['identity']
+
+            name = template_identity+'-'+str(random.randint(1,10))
+
+            Experiment_Templates_Import_Body = json.dumps(
+                {
+                    "accountIdentifier": account_id,
+                    "infraRef": infra_ref,
+                    "organizationIdentifier": org,
+                    "projectIdentifier": proj,
+                    "name": name,
+                    "identity": name
+                }
+
+                )
+
+            print(template_identity)
 
             import_template_url = BASE_URL_TEMPLATES+'/'+template_identity+'/launch'
 
@@ -63,13 +62,16 @@ def create_experiment_from_template(org,proj,env_id,infra_id,chaos_hub):
 
 if __name__ == "__main__":
 
-    #Read the environment Variables
+    ACCOUNT_IDENTIFIER = 'Your Account Identifier'
 
-    orgId = os.getenv('ORG_ID')
-    projectId = os.getenv('PROJECT_ID')
-    envId = os.getenv('ENV_ID')
-    infraId = os.getenv('INFRA_ID')
-    chaoshubId = os.getenv('CHAOSHUB_ID')
+    #Read Environment Variables
 
-    create_experiment_from_template(orgId,projectId,envId,infraId,chaoshubId)
+    api_token = os.getenv('API_TOKEN')
+    org_id = os.getenv('ORG_ID')
+    project_id = os.getenv('PROJECT_ID')
+    env_id = os.getenv('ENV_ID')
+    infra_id = os.getenv('INFRA_ID')
+    chaoshub_id = os.getenv('CHAOSHUB_ID')
+
+    create_experiment_from_template(ACCOUNT_IDENTIFIER,org_id,project_id,env_id,infra_id,chaoshub_id,api_token)
 
