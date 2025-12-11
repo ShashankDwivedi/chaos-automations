@@ -34,7 +34,7 @@ def get_powershell_command(account_id,org_id,project_id,api_url,api_token,infra_
                 "infraType": "Windows"
             }
 
-    response = requests.post(api_url,params=params,headers=headers,json=payload)
+    response = requests.post(api_url,params=params,headers=headers,json=payload,verify=False)
 
     response = response.json()
 
