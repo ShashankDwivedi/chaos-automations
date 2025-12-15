@@ -1,7 +1,3 @@
-Here is a clean, professional `README.md` you can include with your script.
-
------
-
 # Harness Chaos Template Creator
 
 A Python utility to create Chaos Experiment Templates in Harness at the Account level by reading configurations from a local JSON file. This script handles the specific JSON payload formatting required by the Harness Chaos Manager API.
