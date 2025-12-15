@@ -57,7 +57,7 @@ export CHAOSHUB_ID="my-chaoshub"
 Run the script directly once all environment variables are set:
 
 ```bash
-python import_chaos_experiments.py
+python harness_chaos_bulk_importer.py
 ```
 
 You should see output similar to:
