@@ -1,0 +1,63 @@
+{
+  "apiVersion": "litmuschaos.io/v1beta1",
+  "kind": "ChaosExperimentTemplate",
+  "identity": "poddeletetemplate",
+  "name": "pod-delete-template",
+  "revision": "v1",
+  "isDefault": true,
+  "spec": {
+    "infraType": "KubernetesV2",
+    "actions": [],
+    "faults": [
+      {
+        "name": "pod-delete-xsy",
+        "identity": "pod-delete",
+        "revision": "v1",
+        "isEnterprise": true,
+        "values": [
+          {
+            "name": "TARGET_WORKLOAD_KIND",
+            "value": "<+input>"
+          },
+          {
+            "name": "TARGET_WORKLOAD_NAMESPACE",
+            "value": "<+input>"
+          },
+          {
+            "name": "TARGET_WORKLOAD_NAMES",
+            "value": "<+input>"
+          },
+          {
+            "name": "TOTAL_CHAOS_DURATION",
+            "value": "<+input>"
+          }
+        ],
+        "authEnabled": false
+      }
+    ],
+    "probes": [],
+    "vertices": [
+      {
+        "name": "v-xuw",
+        "start": {
+          "faults": [
+            {
+              "name": "pod-delete-xsy"
+            }
+          ]
+        }
+      },
+      {
+        "name": "v-end",
+        "end": {
+          "faults": [
+            {
+              "name": "pod-delete-xsy"
+            }
+          ]
+        }
+      }
+    ],
+    "cleanupPolicy": "delete"
+  }
+}
