@@ -29,7 +29,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
         'X-API-KEY': api_token
          }
 
-        templates_list = requests.request('GET',BASE_URL_TEMPLATES,params=params,headers=chaos_headers,verify=False)
+        templates_list = requests.request('GET',BASE_URL_TEMPLATES,params=params,headers=chaos_headers)
 
         for data in templates_list.json()['data']:
 
@@ -43,6 +43,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
                     "infraRef": infra_ref,
                     "organizationIdentifier": org,
                     "projectIdentifier": proj,
+                    "importType":"REFERENCE",
                     "name": name,
                     "identity": name
                 }
@@ -53,7 +54,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
             import_template_url = BASE_URL_TEMPLATES+'/'+template_identity+'/launch'
 
-            response = requests.request('POST',import_template_url,params=params,headers=chaos_headers,data=Experiment_Templates_Import_Body,verify=False)
+            response = requests.request('POST',import_template_url,params=params,headers=chaos_headers,data=Experiment_Templates_Import_Body)
 
             print(response.text)
     except:
@@ -62,9 +63,9 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
 if __name__ == "__main__":
 
-    ACCOUNT_IDENTIFIER = 'Your Account Identifier'
+    ACCOUNT_IDENTIFIER = 'SxuV0ChbRqWGSYClFlMQMQ'
 
-    API_TOKEN = "Your API Token"
+    API_TOKEN = "pat.SxuV0ChbRqWGSYClFlMQMQ.6915a15f5176ec4f502fe8f6.xXH1gkbbuSWnIkv6mhgQ"
 
     parser = argparse.ArgumentParser(description="Sample script to read arguments from user")
 
