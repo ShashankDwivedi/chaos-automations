@@ -5,7 +5,6 @@ import os
 import sys
 
 # Author: Shashank Dwivedi, Senior Technical Program Manager, Harness
-# Improved Version
 
 BASE_URL_TEMPLATES = 'https://app.harness.io/gateway/chaos/manager/api/rest/experimenttemplates'
 
