@@ -68,7 +68,7 @@ def create_experiment_from_template(account_id, org, proj, env_id, infra_id, cha
                 "projectIdentifier": proj,
                 "name": new_experiment_name,
                 "identity": new_experiment_name,
-                "importType": "REFERENCE"
+                "importType": "LOCAL"
             }
 
             print(f"Importing Template: {template_identity} -> New Name: {new_experiment_name}")
