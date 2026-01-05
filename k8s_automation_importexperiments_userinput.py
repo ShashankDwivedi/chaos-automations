@@ -1,9 +1,8 @@
 #Author: Shashank Dwivedi, Senior Technical Program Manager, Harness
-
 import requests
 import json
 import argparse
-import random
+import uuid
 
 BASE_URL_TEMPLATES = 'https://app.harness.io/gateway/chaos/manager/api/rest/experimenttemplates'
 
@@ -35,7 +34,9 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
 
             template_identity = data['identity']
 
-            name = template_identity+'-'+str(random.randint(1,10))
+            unique_suffix = str(uuid.uuid4())[:8]
+
+            name = template_identity+'-'+unique_suffix
 
             Experiment_Templates_Import_Body = json.dumps(
                 {
@@ -57,13 +58,13 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
             response = requests.request('POST',import_template_url,params=params,headers=chaos_headers,data=Experiment_Templates_Import_Body)
 
             print(response.text)
-    except:
+    except Exception as e:
 
-        print('Exception Occured While Creating Experiment for ORG: '+org+'Project: '+proj+'InfraRef: '+infra_ref)
+        print('Exception Occured While Importing Experiment',e)
 
 if __name__ == "__main__":
 
-    ACCOUNT_IDENTIFIER = 'Your Account ID'
+    ACCOUNT_IDENTIFIER = 'Your Account Identifier'
 
     API_TOKEN = "Your API Token"
 
