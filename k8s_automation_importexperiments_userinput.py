@@ -44,7 +44,7 @@ def create_experiment_from_template(account_id,org,proj,env_id,infra_id,chaos_hu
                     "infraRef": infra_ref,
                     "organizationIdentifier": org,
                     "projectIdentifier": proj,
-                    "importType":"LOCAL",
+                    "importType":"REFERENCE",
                     "name": name,
                     "identity": name
                 }
