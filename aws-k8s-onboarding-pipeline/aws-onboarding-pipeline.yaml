@@ -6,7 +6,7 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: Create Chaos Infra
+        name: aws-k8s-onboarding
         identifier: Create_Chaos_Infra
         description: ""
         type: Custom
