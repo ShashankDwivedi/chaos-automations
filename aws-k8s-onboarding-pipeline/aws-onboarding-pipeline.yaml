@@ -1,0 +1,475 @@
+pipeline:
+  name: AWS-Centralised-K8s-Onboarding
+  identifier: createchaosInfra
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Create Chaos Infra
+        identifier: Create_Chaos_Infra
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: Apply K8s RBAC
+                  identifier: Apply_K8s_RBAC
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          #!/bin/bash
+
+                          # Configuration
+                          NAMESPACE=<+pipeline.variables.namespace>
+                          SA_NAME=<+pipeline.variables.service_account>
+
+                          echo "----------------------------------------------------"
+                          echo "🚀 Starting Harness Chaos Delegate RBAC Setup"
+                          echo "----------------------------------------------------"
+
+                          # 1. Explicitly check for and create the namespace if missing
+                          if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
+                              echo "Creation: Namespace '$NAMESPACE' not found. Creating it now..."
+                              kubectl create namespace "$NAMESPACE"
+                          else
+                              echo "Check: Namespace '$NAMESPACE' already exists. Proceeding..."
+                          fi
+
+                          # 2. Apply the rest of the resources
+                          # Using kubectl apply with a heredoc
+                          cat <<EOF | kubectl apply -f -
+                          apiVersion: v1
+                          kind: ServiceAccount
+                          metadata:
+                            name: $SA_NAME
+                            namespace: $NAMESPACE
+                          ---
+                          apiVersion: rbac.authorization.k8s.io/v1
+                          kind: Role
+                          metadata:
+                            namespace: $NAMESPACE
+                            name: chaos-runner-role
+                          rules:
+                          - apiGroups: ["apps"]
+                            resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+                            verbs: ["create", "delete", "get", "list", "patch", "update", "watch", "deletecollection"]
+                          - apiGroups: [""]
+                            resources: ["pods", "pods/log", "pods/exec", "secrets", "services", "configmaps"]
+                            verbs: ["create", "delete", "get", "list", "patch", "update", "watch", "deletecollection"]
+                          - apiGroups: ["batch"]
+                            resources: ["jobs", "cronjobs"]
+                            verbs: ["create", "delete", "get", "list", "patch", "update", "watch", "deletecollection"]
+                          ---
+                          apiVersion: rbac.authorization.k8s.io/v1
+                          kind: RoleBinding
+                          metadata:
+                            name: chaos-runner-rolebinding
+                            namespace: $NAMESPACE
+                          subjects:
+                          - kind: ServiceAccount
+                            name: $SA_NAME
+                            namespace: $NAMESPACE
+                          roleRef:
+                            kind: Role
+                            name: chaos-runner-role
+                            apiGroup: rbac.authorization.k8s.io
+                          ---
+                          apiVersion: rbac.authorization.k8s.io/v1
+                          kind: ClusterRole
+                          metadata:
+                            name: chaos-clusterrole
+                          rules:
+                          - apiGroups: ["apps"]
+                            resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+                            verbs: ["watch", "list", "get"]
+                          - apiGroups: [""]
+                            resources: ["pods", "replicationcontrollers", "services", "statefulsets", "nodes", "namespaces"]
+                            verbs: ["watch", "list", "get"]
+                          - apiGroups: ["batch"]
+                            resources: ["jobs", "cronjobs"]
+                            verbs: ["watch", "list", "get"]
+                          - apiGroups: [""]
+                            resources: ["pods"]
+                            verbs: ["create", "delete", "get", "list", "patch", "update", "watch", "deletecollection"]
+                          - apiGroups: ["networking.k8s.io"]
+                            resources: ["networkpolicies"]
+                            verbs: ["create", "delete", "get", "list"]
+                          - apiGroups: ["metrics.k8s.io"]
+                            resources: ["pods", "nodes"]
+                            verbs: ["get", "list"]
+                          - apiGroups: ["apps"]
+                            resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+                            verbs: ["list", "get", "update"]
+                          - apiGroups: [""]
+                            resources: ["replicationcontrollers", "services"]
+                            verbs: ["get", "list"]
+                          - apiGroups: ["apps.openshift.io"]
+                            resources: ["deploymentconfigs"]
+                            verbs: ["list", "get"]
+                          - apiGroups: ["argoproj.io"]
+                            resources: ["rollouts"]
+                            verbs: ["list", "get"]
+                          ---
+                          apiVersion: rbac.authorization.k8s.io/v1
+                          kind: ClusterRoleBinding
+                          metadata:
+                            name: chaos-rolebinding
+                          roleRef:
+                            apiGroup: rbac.authorization.k8s.io
+                            kind: ClusterRole
+                            name: chaos-clusterrole
+                          subjects:
+                          - kind: ServiceAccount
+                            name: $SA_NAME
+                            namespace: $NAMESPACE
+                          EOF
+
+                          if [ $? -eq 0 ]; then
+                              echo "----------------------------------------------------"
+                              echo "✅ Success: All resources applied successfully."
+                          else
+                              echo "----------------------------------------------------"
+                              echo "❌ Error: Failed to apply Kubernetes resources."
+                              exit 1
+                          fi
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+              - step:
+                  type: ShellScript
+                  name: Create Chaos Infra
+                  identifier: Create_Chaos_Infra
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          #!/bin/bash
+
+                          # --- Configuration ---
+                          URL="https://app.harness.io/ng/api/infrastructures"
+                          API_KEY=<+pipeline.variables.API_TOKEN>
+
+                          ACCOUNT_ID=<+pipeline.variables.account_id>
+
+                          # The variable you want to refer to
+                          INFRA_ID=<+pipeline.variables.infra_id>
+
+                          ORG_ID=<+pipeline.variables.org_id>
+
+                          PROJECT_ID=<+pipeline.variables.project_id>
+
+                          ENV_ID=<+pipeline.variables.env_id>
+
+                          NAMESPACE=<+pipeline.variables.namespace>
+
+                          echo "Creating Infrastructure: $INFRA_ID..."
+
+                          # --- Execute Request ---
+                          # Using double quotes for --data-raw to allow variable expansion
+                          curl --location --request POST "$URL?accountIdentifier=$ACCOUNT_ID" \
+                          --header "x-api-key: $API_KEY" \
+                          --header "Content-Type: application/json" \
+                          --data-raw "{
+                            \"name\": \"$INFRA_ID\",
+                            \"identifier\": \"$INFRA_ID\",
+                            \"description\": \"infrastructure description\",
+                            \"tags\": {},
+                            \"orgIdentifier\": \"$ORG_ID\",
+                            \"projectIdentifier\": \"$PROJECT_ID\",
+                            \"environmentRef\": \"$ENV_ID\",
+                            \"deploymentType\": \"Kubernetes\",
+                            \"type\": \"KubernetesDirect\",
+                            \"yaml\": \"infrastructureDefinition:\n  name: $INFRA_ID\n  identifier: $INFRA_ID\n  description: infrastructure description\n  tags: {}\n  orgIdentifier: $ORG_ID\n  projectIdentifier: $PROJECT_ID\n  environmentRef: $ENV_ID\n  deploymentType: Kubernetes\n  type: KubernetesDirect\n  spec:\n    connectorRef: account.shashankchaosconnector\n    namespace: $NAMESPACE\n    releaseName: release-<+INFRA_KEY>\n  allowSimultaneousDeployments: false\n\"
+                          }"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Ignore
+              - step:
+                  type: ShellScript
+                  name: Enable_Chaos_V2
+                  identifier: Enable_Chaos_V2
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          #!/bin/bash
+
+                          # --- Configuration ---
+                          URL="https://app.harness.io/gateway/chaos/manager/api/rest/v2/infrastructure"
+                          API_KEY=<+pipeline.variables.API_TOKEN>
+                          ACCOUNT_ID=<+pipeline.variables.account_id>
+                          ORG_ID=<+pipeline.variables.org_id>
+                          PROJECT_ID=<+pipeline.variables.project_id>
+                          NAMESPACE=<+pipeline.variables.namespace>
+                          INFRA_ID=<+pipeline.variables.infra_id>
+                          ENV_ID=<+pipeline.variables.env_id>
+
+                          FULL_URL="${URL}?accountIdentifier=${ACCOUNT_ID}&organizationIdentifier=${ORG_ID}&projectIdentifier=${PROJECT_ID}"
+
+                          echo "🚀 Creating Chaos Infrastructure: $INFRA_ID..."
+
+                          # --- Execute Request ---
+                          curl --location --request POST "$FULL_URL" \
+                          --header "x-api-key: $API_KEY" \
+                          --header "Content-Type: application/json" \
+                          --data-raw "{
+                            \"identifier\": {
+                              \"accountIdentifier\": \"$ACCOUNT_ID\",
+                              \"orgIdentifier\": \"$ORG_ID\",
+                              \"projectIdentifier\": \"$PROJECT_ID\"
+                            },
+                            \"infraScope\": \"NAMESPACE\",
+                            \"infraType\": \"KUBERNETESV2\",
+                            \"imageRegistry\": {
+                              \"identifier\": {
+                                \"accountIdentifier\": \"$ACCOUNT_ID\",
+                                \"orgIdentifier\": \"\",
+                                \"projectIdentifier\": \"\"
+                              },
+                              \"infraID\": \"\",
+                              \"registryServer\": \"docker.io\",
+                              \"registryAccount\": \"harness\",
+                              \"isOverrideAllowed\": false,
+                              \"isPrivate\": false,
+                              \"secretName\": \"\",
+                              \"useCustomImages\": false
+                            },
+                            \"deploymentType\": \"\",
+                            \"harnessInfraType\": \"KubernetesDirect\",
+                            \"identity\": \"$INFRA_ID\",
+                            \"name\": \"$INFRA_ID\",
+                            \"environmentID\": \"$ENV_ID\",
+                            \"infraID\": \"$INFRA_ID\",
+                            \"k8sConnectorID\": \"account.shashankchaosconnector\",
+                            \"infraNamespace\": \"$NAMESPACE\",
+                            \"serviceAccount\": \"chaos-sa\",
+                            \"isChaosEnabled\": true,
+                            \"isAIEnabled\": false,
+                            \"isAutopilotEnabled\": false,
+                            \"insecureSkipVerify\": true
+                          }"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Ignore
+              - step:
+                  type: ShellScript
+                  name: Create AWS Configurations
+                  identifier: Create_AWS_Configurations
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          #!/bin/bash
+
+                          microdnf update
+
+                          microdnf install unzip
+
+                          echo "unzip Is Installed"
+
+                          # --- Configuration Variables ---
+                          AWS_ACCESS_KEY=<+pipeline.variables.AWS_ACCESS_KEY>
+                          AWS_SECRET_KEY=<+pipeline.variables.AWS_SECRET_ID>
+                          AWS_SESSION_KEY=<+pipeline.variables.AWS_SESSION_TOKEN>
+                          AWS_REGION=<+pipeline.variables.aws_region>
+
+                          SOURCE_AWS_ACCOUNT_ID=<+pipeline.variables.aws_source_account_id>
+                          IAM_ROLE_NAME=<+pipeline.variables.source_account_iam_role>
+                          NAMESPACE=<+pipeline.variables.namespace>
+                          SERVICE_ACCOUNT_NAME=<+pipeline.variables.service_account>
+                          OIDC_PROVIDER_ID=<+pipeline.variables.oidc_provider_id> # The ID you are looking for
+
+                          # 1. Install AWS CLI locally (No Sudo)
+                          if ! command -v aws &> /dev/null; then
+                              echo "Installing AWS CLI to local directory..."
+                              
+                              # Create a local bin directory if it doesn't exist
+                              mkdir -p $HOME/.local/bin
+                              
+                              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                              unzip -q awscliv2.zip
+                              
+                              # Install using the --install-dir and --bin-dir flags to avoid /usr/local
+                              ./aws/install --install-dir $HOME/.local/aws-cli --bin-dir $HOME/.local/bin
+                              
+                              # Update PATH for the current session
+                              export PATH=$PATH:$HOME/.local/bin
+                              
+                              # Clean up
+                              rm -rf awscliv2.zip aws/
+                              echo "AWS CLI installed to $HOME/.local/bin"
+                          else
+                              echo "AWS CLI already installed."
+                          fi
+
+                          echo "AWS Version"
+
+                          /opt/harness-delegate/.local/bin/aws --version
+
+                          # 2. Authenticate to AWS
+                          # We use environment variables for immediate session auth
+                          export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY"
+                          export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"
+                          export AWS_SESSION_TOKEN="$AWS_SESSION_KEY"
+                          export AWS_DEFAULT_REGION="$AWS_REGION"
+
+                          # 3. Get Provider ID into a variable
+                          # We search for the specific provider ARN that matches your ID
+                          PROVIDER_ARN=$(aws iam list-open-id-connect-providers | grep "$OIDC_PROVIDER_ID" | tr -d ' ",' | cut -d':' -f2-)
+
+                          echo "Provider ARN ------\n"
+
+                          echo $PROVIDER_ARN
+
+                          if [ -z "$PROVIDER_ARN" ]; then
+                              echo "❌ Error: Could not find OIDC Provider with ID $OIDC_PROVIDER_ID"
+                              exit 1
+                          fi
+                          echo "✅ Found Provider ARN: $PROVIDER_ARN"
+
+                          # 4. Establish OIDC Trust Relationship
+                          # This creates the Trust Policy JSON required for the IAM Role
+                          cat <<EOF > trust-policy.json
+                          {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                              {
+                                "Effect": "Allow",
+                                "Principal": {
+                                  "Federated": "$PROVIDER_ARN"
+                                },
+                                "Action": "sts:AssumeRoleWithWebIdentity",
+                                "Condition": {
+                                  "StringEquals": {
+                                    "${PROVIDER_ARN#arn:aws:iam::$SOURCE_AWS_ACCOUNT_ID:oidc-provider/}:sub": "system:serviceaccount:$NAMESPACE:$SERVICE_ACCOUNT_NAME"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                          EOF
+
+                          # Create the IAM Role (or update if it exists)
+                          echo "Updating/Creating IAM Role: $IAM_ROLE_NAME..."
+                          aws iam create-role --role-name "$IAM_ROLE_NAME" --assume-role-policy-document file://trust-policy.json || \
+                          aws iam update-assume-role-policy --role-name "$IAM_ROLE_NAME" --policy-document file://trust-policy.json
+
+                          # 5. Annotate the Kubernetes Service Account
+                          echo "Annotating Service Account $SERVICE_ACCOUNT_NAME in namespace $NAMESPACE..."
+                          kubectl annotate serviceaccount -n "$NAMESPACE" "$SERVICE_ACCOUNT_NAME" \
+                          eks.amazonaws.com/role-arn="arn:aws:iam::$SOURCE_AWS_ACCOUNT_ID:role/$IAM_ROLE_NAME" --overwrite
+
+                          echo "----------------------------------------------------"
+                          echo "🎉 Setup Complete!"
+                          echo "Role: arn:aws:iam::$SOURCE_AWS_ACCOUNT_ID:role/$IAM_ROLE_NAME"
+                          echo "Trusting: system:serviceaccount:$NAMESPACE:$SERVICE_ACCOUNT_NAME"
+                    environmentVariables: []
+                    outputVariables: []
+                    delegateSelectors:
+                      - shashank-delegate
+                  timeout: 10m
+        tags: {}
+  variables:
+    - name: org_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: project_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: env_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: namespace
+      type: String
+      description: ""
+      required: false
+      value: <+input>
+    - name: API_TOKEN
+      type: Secret
+      description: ""
+      required: false
+      value: account.API_TOKEN
+    - name: infra_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: AWS_ACCESS_KEY
+      type: Secret
+      description: ""
+      required: false
+      value: AWS_ACCESS_KEY
+    - name: AWS_SECRET_ID
+      type: Secret
+      description: ""
+      required: false
+      value: AWS_SECRET_ID
+    - name: AWS_SESSION_TOKEN
+      type: Secret
+      description: ""
+      required: false
+      value: AWS_SESSION_TOKEN
+    - name: account_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: service_account
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: aws_region
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: aws_source_account_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: oidc_provider_id
+      type: String
+      description: ""
+      required: true
+      value: <+input>
+    - name: source_account_iam_role
+      type: String
+      description: ""
+      required: true
+      value: <+input>
