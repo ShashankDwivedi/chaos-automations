@@ -61,7 +61,7 @@ pipeline:
                             resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
                             verbs: ["create", "delete", "get", "list", "patch", "update", "watch", "deletecollection"]
                           - apiGroups: [""]
-                            resources: ["pods", "pods/log", "pods/exec", "secrets", "services", "configmaps"]
+                            resources: ["pods", "pods/log", "pods/exec", "secrets", "services", "configmaps","serviceaccounts"]
                             verbs: ["create", "delete", "get", "list", "patch", "update", "watch", "deletecollection"]
                           - apiGroups: ["batch"]
                             resources: ["jobs", "cronjobs"]
