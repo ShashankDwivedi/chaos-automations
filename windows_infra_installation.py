@@ -1,4 +1,4 @@
-#Author: Shashank Dwivedi, Senior Technical Program Manager, Harness
+#Author: Shashank Dwivedi, Principal Customer Architect, Harness
 #The purpose of this python script is to automate the installation of Windows Infrastructure
 import requests
 import winrm
